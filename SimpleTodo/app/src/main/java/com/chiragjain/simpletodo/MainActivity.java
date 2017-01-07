@@ -1,5 +1,6 @@
 package com.chiragjain.simpletodo;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -7,21 +8,16 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
-import android.content.Intent;
-import org.apache.commons.io.FileUtils;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity
 {
-
-    ArrayList<String> todoItems;
-    ArrayAdapter<String> aToDoAdapter;
-    ListView lvItems;
-    EditText etEditText;
+    TodoDatabaseHelper mHelper;
+    List<String> mTodoItems;
+    ArrayAdapter<String> mToDoAdapter;
+    ListView mLvItems;
+    EditText mEtEditText;
     final int REQUEST_CODE = 20;
 
     @Override
@@ -29,26 +25,28 @@ public class MainActivity extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        mHelper = TodoDatabaseHelper.getInstance(this);
         populateArrayItems();
-        lvItems = (ListView)findViewById(R.id.lvItems);
-        lvItems.setAdapter(aToDoAdapter);
-        etEditText = (EditText)findViewById(R.id.etEditText);
-        lvItems.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+        mLvItems = (ListView)findViewById(R.id.lvItems);
+        mLvItems.setAdapter(mToDoAdapter);
+        mEtEditText = (EditText)findViewById(R.id.etEditText);
+        mLvItems.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                todoItems.remove(position);
-                aToDoAdapter.notifyDataSetChanged();
-                writeItems();
+                String todoText = mTodoItems.get(position);
+                mTodoItems.remove(position);
+                mToDoAdapter.notifyDataSetChanged();
+                mHelper.deleteTodo(todoText);
                 return true;
             }
         });
 
-        lvItems.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        mLvItems.setOnItemClickListener(new AdapterView.OnItemClickListener()
         {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id)
             {
-                String todoText = todoItems.get(position);
+                String todoText = mTodoItems.get(position);
                 Intent i = new Intent(MainActivity.this, EditItemActivity.class);
                 i.putExtra("todoText", todoText);
                 i.putExtra("todoPos", position);
@@ -59,20 +57,14 @@ public class MainActivity extends AppCompatActivity
 
     public void populateArrayItems() {
         readItems();
-        //todoItems = new ArrayList<String>();
-        aToDoAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, todoItems);
+        mToDoAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, mTodoItems);
     }
 
     private void readItems() {
-        File filesDir = getFilesDir();
-        File file = new File(filesDir, "todo.txt");
-        try {
-            todoItems = new ArrayList<String>(FileUtils.readLines(file));
-        } catch (IOException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG);
-        }
+        mTodoItems = mHelper.getAllTodos();
     }
 
+    /*
     private void writeItems() {
         File filesDir = getFilesDir();
         File file = new File(filesDir, "todo.txt");
@@ -81,14 +73,15 @@ public class MainActivity extends AppCompatActivity
         } catch (IOException e) {
 
         }
-    }
+    }*/
 
 
     public void onAddItem(View view)
     {
-        aToDoAdapter.add(etEditText.getText().toString());
-        etEditText.setText("");
-        writeItems();
+        String todoText = mEtEditText.getText().toString();
+        mToDoAdapter.add(todoText);
+        mEtEditText.setText("");
+        mHelper.addTodo(todoText);
     }
 
     @Override
@@ -96,9 +89,10 @@ public class MainActivity extends AppCompatActivity
         if(resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
             String editedTodoText = data.getExtras().getString("editedTodo");
             int editedTodoPos = data.getExtras().getInt("todoPos");
-            todoItems.set(editedTodoPos, editedTodoText);
-            aToDoAdapter.notifyDataSetChanged();
-            writeItems();
+            String oldTodoText = mTodoItems.get(editedTodoPos);
+            mTodoItems.set(editedTodoPos, editedTodoText);
+            mToDoAdapter.notifyDataSetChanged();
+            mHelper.updateTodo(oldTodoText, editedTodoText);
         }
     }
 }
