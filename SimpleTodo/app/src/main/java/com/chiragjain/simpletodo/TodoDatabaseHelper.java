@@ -8,7 +8,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Created by jchirag on 1/3/17.
@@ -62,7 +61,7 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper
         }
     }
 
-    public void addTodo(String todo)
+    public Todo addTodo(String todo)
     {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
@@ -77,16 +76,18 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper
         catch (Exception e)
         {
             Log.d(TAG, "Error while trying to add todo to database");
+            return null;
         }
         finally
         {
             db.endTransaction();
+            return getLastInsertedTodo();
         }
     }
 
-    public List<String> getAllTodos()
+    public ArrayList<Todo> getAllTodos()
     {
-        List<String> todos = new ArrayList<>();
+        ArrayList<Todo> todos = new ArrayList<>();
         String TODOS_SELECT_QUERY = String.format("Select * from %s", TABLE_TODO);
         SQLiteDatabase db = getReadableDatabase();
         Cursor cursor = db.rawQuery(TODOS_SELECT_QUERY, null);
@@ -96,7 +97,10 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper
             {
                 do
                 {
-                    todos.add(cursor.getString(cursor.getColumnIndex(KEY_TODO_TEXT)));
+                    Todo todo = new Todo();
+                    todo.text = cursor.getString(cursor.getColumnIndex(KEY_TODO_TEXT));
+                    todo.id = cursor.getInt(cursor.getColumnIndex(KEY_ID));
+                    todos.add(todo);
                 } while (cursor.moveToNext());
             }
         }
@@ -114,20 +118,20 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper
         return todos;
     }
 
-    public void deleteTodo(String todo)
+    public void deleteTodo(Todo todo)
     {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try
         {
             String DELETE_TODO_QUERY =
-                    String.format("DELETE FROM %s WHERE %s = '%s';", TABLE_TODO, KEY_TODO_TEXT, todo);
+                    String.format("DELETE FROM %s WHERE %s = '%s';", TABLE_TODO, KEY_ID, todo.id);
             db.execSQL(DELETE_TODO_QUERY);
             db.setTransactionSuccessful();
         }
         catch (Exception e)
         {
-            Log.d(TAG, "Error while trying to delete todo: " + todo);
+            Log.d(TAG, "Error while trying to delete todo: " + todo.id);
         }
         finally
         {
@@ -135,7 +139,7 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper
         }
     }
 
-    public void updateTodo(String oldTodo, String newTodo)
+    public void updateTodo(int id, String newTodo)
     {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
@@ -143,18 +147,51 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper
         {
             String UPDATE_TODO_QUERY =
                     String.format("UPDATE %s set %s='%s' where %s='%s';", TABLE_TODO, KEY_TODO_TEXT, newTodo,
-                            KEY_TODO_TEXT,
-                            oldTodo);
+                            KEY_ID,
+                            Integer.toString(id));
             db.execSQL(UPDATE_TODO_QUERY);
             db.setTransactionSuccessful();
         }
         catch (Exception e)
         {
-            Log.d(TAG, "Error while trying to update todo: " + oldTodo);
+            Log.d(TAG, "Error while trying to update todo with id: " + Integer.toString(id));
         }
         finally
         {
             db.endTransaction();
         }
+    }
+
+    public Todo getLastInsertedTodo() {
+        SQLiteDatabase db = getReadableDatabase();
+        String LAST_SELECT_QUERY = String.format("SELECT * FROM %s WHERE %s = (SELECT MAX(%s) FROM %s)", TABLE_TODO, KEY_ID, KEY_ID, TABLE_TODO);
+        Cursor cursor = db.rawQuery(LAST_SELECT_QUERY, null);
+        Todo todo = null;
+        try
+        {
+            if (cursor.moveToFirst())
+            {
+                do
+                {
+                    todo = new Todo();
+                    todo.text = cursor.getString(cursor.getColumnIndex(KEY_TODO_TEXT));
+                    todo.id = cursor.getInt(cursor.getColumnIndex(KEY_ID));
+                    break;
+                } while (cursor.moveToNext());
+            }
+        }
+        catch (Exception e)
+        {
+            Log.d(TAG, "Error while trying to get last todo from database");
+            todo = null;
+        }
+        finally
+        {
+            if (cursor != null && !cursor.isClosed())
+            {
+                cursor.close();
+            }
+        }
+        return todo;
     }
 }

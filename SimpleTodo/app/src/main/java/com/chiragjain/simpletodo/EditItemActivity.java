@@ -10,7 +10,7 @@ public class EditItemActivity extends AppCompatActivity
 {
 
     EditText etEditTodo;
-    int todoPos;
+    int todoPos, todoId;
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -21,6 +21,7 @@ public class EditItemActivity extends AppCompatActivity
         etEditTodo.setText(todoText);
         etEditTodo.setSelection(todoText.length());
         todoPos = getIntent().getIntExtra("todoPos", 0);
+        todoId = getIntent().getIntExtra("todoId", 0);
     }
 
     public void onEditItem(View view)
@@ -30,6 +31,7 @@ public class EditItemActivity extends AppCompatActivity
 
         data.putExtra("editedTodo", editedTodo);
         data.putExtra("todoPos", todoPos);
+        data.putExtra("todoId", todoId);
         setResult(RESULT_OK, data);
         finish();
     }
