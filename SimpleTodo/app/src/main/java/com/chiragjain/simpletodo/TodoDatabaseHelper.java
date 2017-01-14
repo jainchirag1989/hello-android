@@ -8,6 +8,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+import java.util.Date;
 
 /**
  * Created by jchirag on 1/3/17.
@@ -15,11 +18,12 @@ import java.util.ArrayList;
 public class TodoDatabaseHelper extends SQLiteOpenHelper
 {
     // Database Info
-    private static final String DATABASE_NAME = "todoDatabase";
+    private static final String DATABASE_NAME = "todoDatabasev1";
     private static final int DATABASE_VERSION = 1;
     private static final String TABLE_TODO = "todos";
     private static final String KEY_ID = "id";
     private static final String KEY_TODO_TEXT = "text";
+    private static final String KEY_TODO_DATE = "tododate";
     private final String TAG = this.getClass().getSimpleName();
 
     private static TodoDatabaseHelper sInstance;
@@ -44,9 +48,9 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper
         String CREATE_TODO_TABLE = "CREATE TABLE " + TABLE_TODO +
                 "(" +
                 KEY_ID + " INTEGER PRIMARY KEY, " +
-                KEY_TODO_TEXT + " TEXT" +
+                KEY_TODO_TEXT + " TEXT, " +
+                KEY_TODO_DATE + " DATE" +
                 ")";
-
         db.execSQL(CREATE_TODO_TABLE);
     }
 
@@ -61,15 +65,17 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper
         }
     }
 
-    public Todo addTodo(String todo)
+    public Todo addTodo(Todo todo)
     {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try
         {
             ContentValues values = new ContentValues();
-            values.put(KEY_TODO_TEXT, todo);
-
+            values.put(KEY_TODO_TEXT, todo.text);
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+            String todoDate = sdf.format(todo.tododate);
+            values.put(KEY_TODO_DATE, todoDate);
             db.insertOrThrow(TABLE_TODO, null, values);
             db.setTransactionSuccessful();
         }
@@ -81,6 +87,7 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper
         finally
         {
             db.endTransaction();
+            Log.i(TAG, "New todo added successfully");
             return getLastInsertedTodo();
         }
     }
@@ -100,6 +107,9 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper
                     Todo todo = new Todo();
                     todo.text = cursor.getString(cursor.getColumnIndex(KEY_TODO_TEXT));
                     todo.id = cursor.getInt(cursor.getColumnIndex(KEY_ID));
+                    String tododate = cursor.getString(cursor.getColumnIndex(KEY_TODO_DATE));
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    todo.tododate = (Date) sdf.parse(tododate);
                     todos.add(todo);
                 } while (cursor.moveToNext());
             }
@@ -139,22 +149,22 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper
         }
     }
 
-    public void updateTodo(int id, String newTodo)
+    public void updateTodo(Todo todo)
     {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         try
         {
             String UPDATE_TODO_QUERY =
-                    String.format("UPDATE %s set %s='%s' where %s='%s';", TABLE_TODO, KEY_TODO_TEXT, newTodo,
-                            KEY_ID,
-                            Integer.toString(id));
+                    String.format("UPDATE %s set %s='%s', %s='%s' where %s='%s';", TABLE_TODO, KEY_TODO_TEXT, todo.text,
+                            KEY_TODO_DATE, sdf.format(todo.tododate), KEY_ID, Integer.toString(todo.id));
             db.execSQL(UPDATE_TODO_QUERY);
             db.setTransactionSuccessful();
         }
         catch (Exception e)
         {
-            Log.d(TAG, "Error while trying to update todo with id: " + Integer.toString(id));
+            Log.d(TAG, "Error while trying to update todo with id: " + Integer.toString(todo.id));
         }
         finally
         {
@@ -176,6 +186,8 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper
                     todo = new Todo();
                     todo.text = cursor.getString(cursor.getColumnIndex(KEY_TODO_TEXT));
                     todo.id = cursor.getInt(cursor.getColumnIndex(KEY_ID));
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                    todo.tododate = sdf.parse(cursor.getString(cursor.getColumnIndex(KEY_TODO_DATE)));
                     break;
                 } while (cursor.moveToNext());
             }

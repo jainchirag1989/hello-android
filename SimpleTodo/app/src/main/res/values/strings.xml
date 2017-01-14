@@ -4,4 +4,6 @@
     <string name="add_item">Add a new item</string>
     <string name="edit_item_label">Edit Item Below:</string>
     <string name="edit_item_save_btn">Save</string>
+    <string name="add_text">Add New Todo</string>
+    <string name="add_todo_btn">Add Todo</string>
 </resources>

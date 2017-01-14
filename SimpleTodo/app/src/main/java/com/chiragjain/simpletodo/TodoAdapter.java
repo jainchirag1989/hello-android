@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 /**
@@ -30,10 +31,13 @@ public class TodoAdapter extends ArrayAdapter<Todo>
         TextView todoId = (TextView) convertView.findViewById(R.id.todo_id);
         TextView todoText = (TextView) convertView.findViewById(R.id.todo_text);
         TextView todoSerialNum = (TextView) convertView.findViewById(R.id.todo_serialnum);
+        TextView todoDate = (TextView) convertView.findViewById(R.id.todo_date);
         // Populate the data into the template view using the data object
         todoId.setText(Integer.toString(todo.id));
         todoText.setText(todo.text);
         todoSerialNum.setText(Integer.toString(position+1));
+        SimpleDateFormat sdf = new SimpleDateFormat("EEE, MMMM d, yyyy");
+        todoDate.setText(sdf.format(todo.tododate));
         // Return the completed view to render on screen
         return convertView;
     }

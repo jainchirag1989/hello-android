@@ -17,7 +17,10 @@
         android:onClick="onAddItem"
         android:layout_alignParentBottom="true"
         android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true" />
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:contextClickable="false" />
 
     <ListView
         android:layout_width="wrap_content"
@@ -27,14 +30,4 @@
         android:layout_alignParentStart="true"
         android:layout_above="@+id/btnAddItem" />
 
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/etEditText"
-        android:layout_alignTop="@+id/btnAddItem"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_toLeftOf="@+id/btnAddItem"
-        android:layout_toStartOf="@+id/btnAddItem"
-        android:hint="@string/add_item" />
 </RelativeLayout>
